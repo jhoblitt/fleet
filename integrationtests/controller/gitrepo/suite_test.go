@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/kubectl/pkg/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -75,6 +76,18 @@ var _ = BeforeSuite(func() {
 		Scheme:         scheme.Scheme,
 		LeaderElection: false,
 		Metrics:        metricsserver.Options{BindAddress: "0"},
+		// See https://github.com/kubernetes-sigs/controller-runtime/blob/main/designs/cache_options.md for more details
+		Cache: cache.Options{
+			// restrict ListWatch for configmaps to the fleet namespace, e.g. cattle-fleet-system
+			// ByObject: map[client.Object]cache.ByObject{
+			//         &corev1.ConfigMap{}: {
+			//                 Namespaces: map[string]cache.Config{
+			//                         systemNamespace: {},
+			//                 },
+			//         },
+			// },
+			DefaultNamespaces: map[string]cache.Config{cache.AllNamespaces: {}},
+		},
 	})
 	Expect(err).ToNot(HaveOccurred())
 
