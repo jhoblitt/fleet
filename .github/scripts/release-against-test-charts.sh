@@ -37,10 +37,8 @@ else
 fi
 
 for i in fleet fleet-crd fleet-agent; do
-	# XXX: is this still necessary? Recent release process change
-	# If not, remove this from non-test script as well?
     yq --inplace "del( .${i}.[] | select(. == \"${PREV_CHART_VERSION}+up${PREV_FLEET_VERSION}\") )" release.yaml
-    yq --inplace ".${i} += \"${NEW_CHART_VERSION}+up${NEW_FLEET_VERSION}\"" release.yaml
+    yq --inplace ".${i} += [\"${NEW_CHART_VERSION}+up${NEW_FLEET_VERSION}\"]" release.yaml
 done
 
 git add packages/fleet release.yaml
@@ -49,24 +47,23 @@ git commit -m "Updating to Fleet v${NEW_FLEET_VERSION}"
 NEW_FULL_VERSION=${NEW_CHART_VERSION}+up${NEW_FLEET_VERSION}
 
 for suffix in '' '-agent' '-crd'; do
-	chart_dir=charts/fleet$suffix/${NEW_FULL_VERSION}
-	mkdir -p $chart_dir
-	cp -r ../fleet/build/charts/fleet$suffix/* $chart_dir
-	cd $chart_dir
+    chart_dir=charts/fleet$suffix/${NEW_FULL_VERSION}
+    mkdir -p $chart_dir
+    cp -r ../fleet/charts/fleet$suffix/* $chart_dir
+    cd $chart_dir
 
-	find . -type f -exec sed -i -e "s/version: ${PREV_FLEET_VERSION}/version: ${NEW_FULL_VERSION}/g" {} \;
-	find . -type f -exec sed -i -e "s/${PREV_FLEET_VERSION}/${NEW_FLEET_VERSION}/g" {} \;
-	
-	# Edit repo and tag with ttl.sh values
-	sed -z -E -i "s,repository: rancher/fleet$suffix\n(\s+tag:)[^\n]*,repository: ttl.sh/rancher-fleet$suffix-$UUID\n\1 1h," values.yaml
+    sed -i \
+      -e "s@repository:.*@repository: ttl.sh/rancher-fleet$suffix-$UUID@" \
+      -e "s/tag:.*/tag: 1h/" \
+      values.yaml
 
-	if [ -z "$suffix" ]; then
-		sed -z -E -i "s,repository: rancher/fleet-agent\n(\s+tag:)[^\n]*,repository: ttl.sh/rancher-fleet-agent-$UUID\n\1 1h," values.yaml
-	fi
+    cd -
 
-	cd -
-
-	helm package -d assets/fleet$suffix $chart_dir --version ${NEW_FULL_VERSION}
+    helm package \
+        --version="$NEW_FLEET_VERSION" \
+        --app-version="$NEW_FULL_VERSION" \
+        -d ./assets/fleet$suffix \
+        $chart_dir
 done
 
 make index # Merge new chart entries into `index.yaml`

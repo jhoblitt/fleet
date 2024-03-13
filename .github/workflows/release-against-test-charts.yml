@@ -151,21 +151,18 @@ jobs:
 
       - name: Run release script
         run: |
-          cd ./fleet
           fleet_version=9.9.9
 
-          sed -i -e "s/tag:.*/tag: v$fleet_version/" charts/fleet/values.yaml
-          sed -i -e "s/tag: dev/tag: v$fleet_version/" charts/fleet-agent/values.yaml
+          prev_chart=$(ls -1 ./charts/charts/fleet | tail -n 1)
+          prev_fleet=${prev_chart#*+up}
+          prev_chart=${prev_chart/+*}
 
-          helm package --version="$fleet_version" --app-version="$fleet_version" -d ./dist ./charts/fleet
-          helm package --version="$fleet_version" --app-version="$fleet_version" -d ./dist ./charts/fleet-crd
-          helm package --version="$fleet_version" --app-version="$fleet_version" -d ./dist ./charts/fleet-agent
-
-          prev_full=$(ls -1 ./charts/charts/fleet | tail -n 1)
-          prev_fleet=${prev_full#*+up}
-          prev_chart=${prev_full/+*}
-
-          ./fleet/.github/scripts/release-against-test-charts.sh $prev_fleet $fleet_version $prev_chart 999.9.9 ${{ steps.uuid.outputs.uuid }}
+          ./fleet/.github/scripts/release-against-test-charts.sh \
+            $prev_fleet \
+            $fleet_version \
+            $prev_chart \
+            999.9.9 \
+            ${{ steps.uuid.outputs.uuid }}
 
       - name: Push to custom branch
         run: |
