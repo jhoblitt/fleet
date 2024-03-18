@@ -60,8 +60,8 @@ for suffix in '' '-agent' '-crd'; do
     cd -
 
     helm package \
-        --version="$NEW_FLEET_VERSION" \
-        --app-version="$NEW_FULL_VERSION" \
+        --version="$NEW_FULL_VERSION" \
+        --app-version="$NEW_FLEET_VERSION" \
         -d ./assets/fleet$suffix \
         $chart_dir
 done
