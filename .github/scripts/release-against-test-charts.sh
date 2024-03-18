@@ -52,10 +52,11 @@ for suffix in '' '-agent' '-crd'; do
     cp -r ../fleet/charts/fleet$suffix/* $chart_dir
     cd $chart_dir
 
+    # Replace rancher/fleet, rancher/fleet-agent and rancher/gitjob image names, but not eg. rancher/kubectl
     sed -i \
-      -e "s@repository:.*@repository: ttl.sh/rancher-fleet$suffix-$UUID@" \
-      -e "s/tag:.*/tag: 1h/" \
-      values.yaml
+        -e "s@repository: rancher/\(\(fleet.*\|gitjob\)\).*@repository: ttl.sh/rancher-\\1-$UUID@" \
+        -e "s/tag: dev/tag: 1h/" \
+        values.yaml
 
     cd -
 
