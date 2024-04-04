@@ -9,5 +9,9 @@
   "ignorePaths": [
     "e2e/assets/deps-charts/no-fleet-yaml/Chart.yaml",
     "e2e/assets/deps-charts/with-fleet-yaml/Chart.yaml"
-  ]
+  ],
+  "force": {
+    "constraints": {
+    }
+  }
 }
